@@ -76,41 +76,50 @@ For each Webtoon page, the following functions are used to extract information:
 - Removed special characters and unnecessary whitespace from **text fields** for better readability..
 - Converted the **`released_date`** column to the **date datatype** to maintain consistency and ensure proper analysis.
 
+Here's the updated **Data Storage** section with your table schema included:
+
+
 ### **Step 4: Data Storage**  
-- The cleaned data is stored in a **MySQL database**   
+- The cleaned data is stored in a **Microsoft SQL Server**.
 - **Table Schema:**  
-  ```sql
-  CREATE TABLE WebtoonData (
-    title_id INT PRIMARY KEY,                -- Unique identifier (Cannot be NULL)
-    released_date DATE NOT NULL,             -- Date of release (Cannot be NULL)
-    title NVARCHAR(255) NOT NULL,            -- Webtoon title (Cannot be NULL)
-    genre NVARCHAR(100) NOT NULL,            -- Genre (Cannot be NULL)
-    authors NVARCHAR(255) NOT NULL,          -- Authors (Cannot be NULL)
-    weekdays NVARCHAR(50) NOT NULL,          -- Publishing days (Cannot be NULL)
-    length INT CHECK (length > 0),           -- Must be positive
-    subscriber INT NOT NULL DEFAULT 0,       -- Default 0 if no subscribers
-    rating FLOAT CHECK (rating BETWEEN 0 AND 10), -- Ensure rating is between 0-10
-    views BIGINT NOT NULL DEFAULT 0,         -- Ensure views default to 0
-    likes BIGINT NOT NULL DEFAULT 0,         -- Ensure likes default to 0
-    status NVARCHAR(50) NOT NULL,            -- Ongoing, Completed, etc.
-    daily_pass NVARCHAR(50) NOT NULL,         -- True, False
-    synopsis NVARCHAR(MAX) NOT NULL          -- Webtoon description (Cannot be NULL)
-);
-  ```
-- **Data Insertion:**  
-  ```python
-  import mysql.connector
-  conn = mysql.connector.connect(host='your_host', user='your_user', password='your_password', database='your_db')
-  cursor = conn.cursor()
-  insert_query = """
-      INSERT INTO webtoon_data (title_id, title, released_date, genre, authors, weekdays, length, subscriber, rating, views, likes, status, daily_pass, synopsis)
-      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-  """
-  cursor.executemany(insert_query, data)
-  conn.commit()
-  cursor.close()
-  conn.close()
-  ```
+  - A **WebtoonData** table was created in SQL Server with the following schema:
+  
+    ```sql
+    CREATE TABLE WebtoonData (
+        title_id INT PRIMARY KEY,                -- Unique identifier (Cannot be NULL)
+        released_date DATE NOT NULL,             -- Date of release (Cannot be NULL)
+        title NVARCHAR(255) NOT NULL,            -- Webtoon title (Cannot be NULL)
+        genre NVARCHAR(100) NOT NULL,            -- Genre (Cannot be NULL)
+        authors NVARCHAR(255) NOT NULL,          -- Authors (Cannot be NULL)
+        weekdays NVARCHAR(50) NOT NULL,          -- Publishing days (Cannot be NULL)
+        length INT CHECK (length > 0),           -- Must be positive
+        subscriber INT NOT NULL DEFAULT 0,       -- Default 0 if no subscribers
+        rating FLOAT CHECK (rating BETWEEN 0 AND 10), -- Ensure rating is between 0-10
+        views BIGINT NOT NULL DEFAULT 0,         -- Ensure views default to 0
+        likes BIGINT NOT NULL DEFAULT 0,         -- Ensure likes default to 0
+        status NVARCHAR(50) NOT NULL,            -- Ongoing, Completed, etc.
+        daily_pass NVARCHAR(50) NOT NULL,         -- True, False
+        synopsis NVARCHAR(MAX) NOT NULL          -- Webtoon description (Cannot be NULL)
+    );
+    ```
+
+- **SQLAlchemy Connection:**  
+  - Established a connection to **Microsoft SQL Server** using **SQLAlchemy**.
+  - The connection string follows this format:
+  
+    ```python
+    engine = sql.create_engine('mssql://<username>:<password>@<server>/<database>?driver=ODBC+DRIVER+17+FOR+SQL+SERVER')
+    ```
+
+- **Loading Data into SQL Server:**  
+  - Used the `to_sql()` function to **append** the cleaned data into the **WebtoonData** table in SQL Server.
+  - The **`if_exists='append'`** parameter ensures that new data is added to the existing table without overwriting it.
+  - The `index=False` ensures that the DataFrame's index is not saved as a separate column in the SQL table.
+  
+    ```python
+    df_unique.to_sql('WebtoonData', con=conn, index=False, if_exists='append')
+    ```
+
 
 ### **Step 5: Automation & Visualization**  (Future Work) 
 - **Apache Airflow** is used to schedule daily/weekly data extraction.  
@@ -131,5 +140,5 @@ For each Webtoon page, the following functions are used to extract information:
 - **Deploy a Dashboard:** Use **Power BI** to visualize insights on popular Webtoons.  
 
 ## **7. Conclusion**  
-This project successfully **scrapes, processes, and stores** Webtoon data in **MySQL Server** for further analysis. Future enhancements will improve automation, data storage, and visualization.  
+This project successfully **scrapes, processes, and stores** Webtoon data in **MySQL Server** for further analysis. Future enhancements will improve automation, data storage, and visualization.    
 
